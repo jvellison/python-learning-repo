@@ -2,6 +2,8 @@ import pandas as pd
 from config_903 import DateCols, EthnicSubcategories
 from dateutil.relativedelta import relativedelta
 
+import numpy as np
+
 def format_dates(column): 
     column.replace(r"^\s*$",pd.NaT, regex=True)
     column = column.fillna(pd.NaT) # fill empty spaces
@@ -66,3 +68,30 @@ def clean_903_table(df: pd.DataFrame, collection_end: pd.Timestamp) -> pd.DataFr
 
     
     return clean_df
+
+def group_calculation(df, column, measure_name):
+    '''
+    A function to group a df by input column, outputs with count and
+    percentage to a datafrane with renamed columns.
+    '''
+    grouped = df.groupby(column).size()
+    grouped = grouped.to_frame(f'{measure_name} - Count').reset_index()
+    grouped = grouped.rename(columns={column:'Value'})
+
+    grouped[f'{measure_name} - Percentage'] = (grouped[f'{measure_name} - Count'] / 
+                                                    grouped[f'{measure_name} - Count'].sum()) * 100
+    return grouped
+
+def time_difference(start_col, end_col, business_days=False):
+    if business_days:
+        # np.busday_count can only use datetime64[D] type data, so we need to
+        # convert the objects
+        time_diff = np.busday_count(
+            start_col.values.astype("datetime64[D]"),
+            end_col.values.astype("datetime64[D]")
+        )
+    else:
+        time_diff = end_col - start_col
+        time_diff = time_diff / pd.Timedelta(days=1) # divide by 1 day to just give number
+    
+    return time_diff.astype("int") # so full days, not a decimal - always rounds down

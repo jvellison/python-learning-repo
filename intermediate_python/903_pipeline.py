@@ -8,8 +8,9 @@ from sqlalchemy import (
     Table,
 )
 
-from utils import clean_903_table
+from utils import clean_903_table, group_calculation, time_difference
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 # Check everything is working
 # print('Code working') #can do before start code to check everything is working
@@ -56,4 +57,28 @@ for key, df in dfs.items():
     # print(key,df)
     dfs[key] = clean_903_table(df, collection_end)
 
-print(dfs['header'])
+# Uncomment to check data cleaning
+# print(dfs['header'])
+
+# dict to store measure ouptuts
+measures = {}
+
+measures["Header by ethnicity"] = group_calculation(dfs['header'],'ETHNICITY','Header - Ethnicities')
+
+#print(measures["Header by ethnicity"])
+
+measures["Header by age"] = group_calculation(dfs['header'],'AGE_BUCKETS','Header - Age')
+
+# print(measures['Header by age'])
+
+# print(pd.concat([measures["Header by ethnicity"], measures["Header by age"]]))
+
+# dfs['missing']['MISSING_DURATION'] = dfs['missing'].apply(
+#     lambda x: relativedelta(x['MIS_END_dt'],x['MIS_START_dt']).normalized().days, axis = 1
+# )
+
+dfs["missing"]["MISSING_DURATION"] = time_difference(
+    dfs["missing"]["MIS_START_dt"], dfs["missing"]["MIS_END_dt"], True
+)
+
+print(dfs['missing'])
