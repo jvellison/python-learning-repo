@@ -8,7 +8,14 @@ from sqlalchemy import (
     Table,
 )
 
-from utils import clean_903_table, group_calculation, time_difference
+from utils import (
+    clean_903_table,
+    group_calculation,
+    time_difference,
+    multiples_same_event,
+    group_calculation_year,
+    appears_on_both,
+)
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import numpy as np
@@ -21,9 +28,9 @@ filepath = "/workspaces/python-learning-repo/intermediate_python/data/903_databa
 collection_year = 2014
 collection_end = datetime(collection_year, 3, 31)
 
-engine_903 = create_engine(f"sqlite+pysqlite:////{filepath}") #neater, easier to read
+engine_903 = create_engine(f"sqlite+pysqlite:////{filepath}")  # neater, easier to read
 
-#new_string = "sqlite+pysqlite:" + filepath #same as above
+# new_string = "sqlite+pysqlite:" + filepath #same as above
 
 connection = engine_903.connect()
 
@@ -41,10 +48,10 @@ metadata_903 = MetaData()
 
 dfs = {}
 for table in table_names:
-    # print(table)    
-    current_table = Table(table, metadata_903, autoload_with = engine_903)
+    # print(table)
+    current_table = Table(table, metadata_903, autoload_with=engine_903)
     with engine_903.connect() as con:
-        stmt = select(current_table) # give everything from table
+        stmt = select(current_table)  # give everything from table
         result = con.execute(stmt).fetchall()
     dfs[table] = pd.DataFrame(result)
 
@@ -64,11 +71,15 @@ for key, df in dfs.items():
 # dict to store measure ouptuts
 measures = {}
 
-measures["Header by ethnicity"] = group_calculation(dfs['header'],'ETHNICITY','Header - Ethnicities')
+measures["Header by ethnicity"] = group_calculation(
+    dfs["header"], "ETHNICITY", "Header - Ethnicities"
+)
 
-#print(measures["Header by ethnicity"])
+# print(measures["Header by ethnicity"])
 
-measures["Header by age"] = group_calculation(dfs['header'],'AGE_BUCKETS','Header - Age')
+measures["Header by age"] = group_calculation(
+    dfs["header"], "AGE_BUCKETS", "Header - Age"
+)
 
 # print(measures['Header by age'])
 
@@ -87,4 +98,35 @@ dfs["missing"]["MISSING_DURATION"] = time_difference(
     dfs["missing"]["MIS_START_dt"], dfs["missing"]["MIS_END_dt"], True
 )
 
-print(dfs['missing'])
+# print(dfs['missing'])
+
+measures["Multiple episodes"] = multiples_same_event(
+    dfs["episodes"], col_name="Number of Episodes"
+)
+
+# print(output)
+
+# print(measures)
+
+dfs["episodes"]["DECOM_YEAR"] = dfs["episodes"]["DECOM_dt"].dt.year
+
+# print(dfs['episodes'])
+
+# Doesn't take account of a second column
+measures["Episodes starting per year"] = group_calculation(
+    dfs["episodes"], "DECOM_YEAR", "Measures starting per year"
+)
+
+# print(measures['Episodes starting per year'])
+
+# output = group_calculation_year(dfs['episodes'], 'DECOM_YEAR', 'PLACE', 'Placements  in a year')
+
+measures["Placement by year"] = group_calculation_year(
+    dfs["episodes"], "DECOM_YEAR", "PLACE", "Placements in a year"
+)
+
+output = appears_on_both(
+    dfs["episodes"], dfs["missing"], "CYP with episodes who have been missing"
+)
+
+print(output)
