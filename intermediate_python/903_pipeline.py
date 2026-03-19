@@ -11,6 +11,7 @@ from sqlalchemy import (
 from utils import clean_903_table, group_calculation, time_difference
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import numpy as np
 
 # Check everything is working
 # print('Code working') #can do before start code to check everything is working
@@ -76,6 +77,11 @@ measures["Header by age"] = group_calculation(dfs['header'],'AGE_BUCKETS','Heade
 # dfs['missing']['MISSING_DURATION'] = dfs['missing'].apply(
 #     lambda x: relativedelta(x['MIS_END_dt'],x['MIS_START_dt']).normalized().days, axis = 1
 # )
+
+# dfs['missing']['MISSING_DURATION'] = dfs['missing']['MIS_END_dt']-dfs['missing']['MIS_START_dt']
+
+# Or for business days
+# dfs["missing"]['MISSING_DURATION'] = np.busday_count(dfs['missing']['MIS_START_dt'].values.astype('datetime64[D]'), dfs['missing']['MIS_END_dt'].values.astype('datetime64[D]'))
 
 dfs["missing"]["MISSING_DURATION"] = time_difference(
     dfs["missing"]["MIS_START_dt"], dfs["missing"]["MIS_END_dt"], True
