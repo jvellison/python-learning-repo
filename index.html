@@ -120,7 +120,6 @@ def calculate_age_buckets(age):
     else:
         return "f) Age error"
 
-#@st.cache_data
 def clean_903_table(df: pd.DataFrame, collection_end: pd.Timestamp):
     df = df.copy()
     clean_df = df.copy()
@@ -279,17 +278,8 @@ if upload:
 
     dfs = pd.read_excel(upload, sheet_name=None)
 
-    #st.write(dfs)
-
-    #@st.cache_data
-    #def clean_function():
     for key, df in dfs.items():
         dfs[key] = clean_903_table(df, collection_end=collection_end)
-
-    #return dfs
-    #dfs = clean_function()
-    
-    #st.table(dfs['header'].head())
 
     measures = {}
 
@@ -307,16 +297,14 @@ if upload:
         list(measures.values())
     )
 
-    #st.table(output_table)
-
     output_table[["List", "Measure"]] = output_table["Measure"].str.split(" - ", expand=True, n=1)
     output_table = output_table[["List", "Measure", "Value", "Count", "Percentage"]]
 
-    with st.expander("Download output"):
+    with st.expander("Download ouput"):
         output_csv = output_table.to_csv(index=False)
-        st.download_button("Download processed data", output_csv, file_name = "Processed 903.csv")
+        st.download_button("Download processed data", output_csv, file_name="Processed 903.csv")
         st.table(output_table)
-    
+
     with st.expander("Plots"):
         plot_table = output_table[(output_table["List"] == "Header")
                                   & (output_table["Measure"] == "Age")]
@@ -334,18 +322,18 @@ if upload:
 
     with st.sidebar:
         st.write("Make slices here")
-
+        
         list_options = output_table["List"].unique()
         list_selected = st.sidebar.radio(
-            "Selected list:", list_options
+            "Selcted list:", list_options
         )
 
         measure_options = output_table["Measure"][output_table["List"] == list_selected].unique()
         measure_selected = st.sidebar.radio(
             "Select measure:", measure_options
         )
-    
-    with st.expander("Sliced Plots"):
+
+    with st.expander("SLiced Plots"):
         plot_table = output_table[(output_table["List"] == list_selected)
                                   & (output_table["Measure"] == measure_selected)]
         
